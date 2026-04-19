@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { db, save, genId } = require('../database/db');
+const { supabase } = require('../database/db');
 const auth = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
@@ -19,103 +19,100 @@ const storage = multer.diskStorage({
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
 // Banners
-router.get('/banners', (req, res) => {
-  res.json(db.banners.filter(b => b.is_active).sort((a,b) => a.sort_order - b.sort_order));
+router.get('/banners', async (req, res) => {
+  if (!supabase) return res.json([]);
+  const { data, error } = await supabase.from('banners').select('*').eq('is_active', 1).order('sort_order', { ascending: true });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
 });
 
-router.get('/banners/all', auth, (req, res) => {
-  res.json([...db.banners].sort((a,b) => a.sort_order - b.sort_order));
+router.get('/banners/all', auth, async (req, res) => {
+  if (!supabase) return res.json([]);
+  const { data, error } = await supabase.from('banners').select('*').order('sort_order', { ascending: true });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
 });
 
-router.post('/banners', auth, upload.single('image'), (req, res) => {
+router.post('/banners', auth, upload.single('image'), async (req, res) => {
   const { title, image_url, sort_order } = req.body;
   const finalUrl = req.file ? `/uploads/${req.file.filename}` : (image_url || '');
   if (!finalUrl) return res.status(400).json({ error: 'Image file or URL required' });
 
-  const newBanner = {
-    id: genId(), title: title || '', image_url: finalUrl,
-    sort_order: parseInt(sort_order) || 0, is_active: 1
-  };
-  db.banners.push(newBanner);
-  save();
-  res.json({ id: newBanner.id, image_url: finalUrl });
+  const { data, error } = await supabase.from('banners').insert([{
+    title: title || '', image_url: finalUrl, sort_order: parseInt(sort_order) || 0, is_active: 1
+  }]).select().single();
+  
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ id: data.id, image_url: finalUrl });
 });
 
-router.put('/banners/:id', auth, (req, res) => {
-  const banner = db.banners.find(b => b.id === parseInt(req.params.id));
-  if (!banner) return res.status(404).json({ error: 'Banner not found' });
-
+router.put('/banners/:id', auth, async (req, res) => {
   const { title, is_active, sort_order } = req.body;
-  banner.title = title;
-  banner.is_active = is_active ? 1 : 0;
-  banner.sort_order = typeof sort_order !== 'undefined' ? parseInt(sort_order) : banner.sort_order;
-  save();
+  const updates = {};
+  if (title !== undefined) updates.title = title;
+  if (is_active !== undefined) updates.is_active = is_active ? 1 : 0;
+  if (sort_order !== undefined) updates.sort_order = parseInt(sort_order);
+
+  const { error } = await supabase.from('banners').update(updates).eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
   res.json({ message: 'Banner updated' });
 });
 
-router.delete('/banners/:id', auth, (req, res) => {
-  const id = parseInt(req.params.id);
-  const banner = db.banners.find(b => b.id === id);
-  if (!banner) return res.status(404).json({ error: 'Banner not found' });
-
-  if (banner.image_url && banner.image_url.startsWith('/uploads/')) {
+router.delete('/banners/:id', auth, async (req, res) => {
+  const { data: banner } = await supabase.from('banners').select('image_url').eq('id', req.params.id).single();
+  if (banner && banner.image_url && banner.image_url.startsWith('/uploads/')) {
     const filePath = path.join(__dirname, '..', banner.image_url);
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   }
-  db.banners = db.banners.filter(b => b.id !== id);
-  save();
+  const { error } = await supabase.from('banners').delete().eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
   res.json({ message: 'Banner deleted' });
 });
 
 // Content logic
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
+  if (!supabase) return res.json({});
+  const { data, error } = await supabase.from('content').select('*');
+  if (error) return res.status(500).json({ error: error.message });
+  
   const content = {};
-  db.content.forEach(c => { content[c.key] = { en: c.value_en, bn: c.value_bn }; });
+  data.forEach(c => { content[c.key] = { en: c.value_en, bn: c.value_bn }; });
   res.json(content);
 });
 
-router.put('/', auth, (req, res) => {
+router.put('/', auth, async (req, res) => {
   const updates = req.body;
-  Object.entries(updates).forEach(([k, v]) => {
-    const item = db.content.find(c => c.key === k);
-    if (item) {
-      item.value_en = v.en || '';
-      item.value_bn = v.bn || '';
-    } else {
-      db.content.push({ key: k, value_en: v.en || '', value_bn: v.bn || '' });
-    }
+  const updatesArray = Object.keys(updates).map(k => {
+    return { key: k, value_en: updates[k].en || '', value_bn: updates[k].bn || '' };
   });
-  save();
+
+  const { error } = await supabase.from('content').upsert(updatesArray);
+  if (error) return res.status(500).json({ error: error.message });
   res.json({ message: 'Content updated' });
 });
 
-router.put('/:key', auth, (req, res) => {
+router.put('/:key', auth, async (req, res) => {
   const { value_en, value_bn } = req.body;
-  const item = db.content.find(c => c.key === req.params.key);
-  if (item) {
-    item.value_en = value_en || ''; item.value_bn = value_bn || '';
-  } else {
-    db.content.push({ key: req.params.key, value_en: value_en || '', value_bn: value_bn || '' });
-  }
-  save();
+  const { error } = await supabase.from('content').upsert([{ 
+    key: req.params.key, value_en: value_en || '', value_bn: value_bn || '' 
+  }]);
+  if (error) return res.status(500).json({ error: error.message });
   res.json({ message: 'Updated' });
 });
 
-router.post('/logo', auth, upload.single('logo'), (req, res) => {
+router.post('/logo', auth, upload.single('logo'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No logo file provided' });
   const finalUrl = `/uploads/${req.file.filename}`;
-  const item = db.content.find(c => c.key === 'site_logo');
-  if (item) {
-    // Optionally delete old logo file here
-    if (item.value_en && item.value_en.startsWith('/uploads/')) {
-      const oldPath = path.join(__dirname, '..', item.value_en);
-      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-    }
-    item.value_en = finalUrl;
-  } else {
-    db.content.push({ key: 'site_logo', value_en: finalUrl, value_bn: '' });
+  
+  // Optionally delete remote/local old logo
+  const { data: item } = await supabase.from('content').select('*').eq('key', 'site_logo').single();
+  if (item && item.value_en && item.value_en.startsWith('/uploads/')) {
+    const oldPath = path.join(__dirname, '..', item.value_en);
+    if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
   }
-  save();
+
+  const { error } = await supabase.from('content').upsert([{ key: 'site_logo', value_en: finalUrl, value_bn: '' }]);
+  if (error) return res.status(500).json({ error: error.message });
   res.json({ message: 'Logo updated', url: finalUrl });
 });
 
