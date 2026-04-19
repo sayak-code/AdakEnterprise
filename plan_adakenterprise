@@ -1,0 +1,83 @@
+# Adak Enterprise – Tathya Mitra Kendra Website: Implementation Plan
+
+## Stack
+| Layer | Technology |
+|---|---|
+| Frontend (Public) | HTML5, CSS3, Vanilla JS (bilingual i18n) |
+| Backend | Node.js + Express |
+| Database | SQLite (via `better-sqlite3`) |
+| Admin Panel | HTML5 + CSS3 + Vanilla JS (protected routes) |
+| SMS/WhatsApp stub | Twilio SDK (stub mode) |
+| File uploads | Multer |
+| Auth | JWT + bcrypt |
+
+## Project Structure
+```
+AdakEnterprise/
+├── server.js                  # Express entry point
+├── package.json
+├── .env
+├── database/
+│   └── db.js                  # SQLite setup + seed data
+├── routes/
+│   ├── auth.js
+│   ├── services.js
+│   ├── sales.js
+│   ├── shopinfo.js
+│   ├── notifications.js
+│   └── content.js
+├── middleware/
+│   └── auth.js
+├── uploads/                   # Banner image uploads
+├── public/                    # Public website (HTML pages)
+│   ├── index.html             # Home
+│   ├── services.html
+│   ├── about.html
+│   ├── contact.html
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   ├── main.js
+│   │   └── i18n.js            # Language switching
+│   └── assets/
+│       └── logo.svg
+└── admin/                     # Admin panel
+    ├── login.html
+    ├── dashboard.html
+    ├── sales.html
+    ├── services-admin.html
+    ├── shop-info.html
+    ├── content-admin.html
+    ├── css/
+    │   └── admin.css
+    └── js/
+        └── admin.js
+```
+
+## Key Features per Phase
+
+### Phase 1 – Database + Backend API
+- SQLite tables: services, sales, shop_info, content, users, notifications
+- REST API endpoints for CRUD operations
+- JWT auth middleware
+- File upload for banners
+
+### Phase 2 – Public Website
+- 4 pages: Home, Services, About, Contact
+- Bilingual English/Bengali toggle
+- Dynamic data from API (services, shop info)
+- Contact form
+
+### Phase 3 – Admin Panel
+- Login with JWT
+- Dashboard: due counter, recent sales
+- Sales entry CRUD + status (pending/done)
+- Service management CRUD
+- Shop info editor
+- Content/banner management
+- Notification trigger (SMS stub via Twilio)
+
+### Phase 4 – Bonus
+- WhatsApp float button
+- Export to Excel
+- Customer history

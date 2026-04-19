@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard – Adak Enterprise</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+
+<div id="pageLoader" class="page-loader"><div class="loader-spin"></div></div>
+
+<div class="admin-layout">
+  <!-- ─── Sidebar ─────────────────────────────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon"><i class="fas fa-landmark"></i></div>
+      <div class="sidebar-logo-text">
+        <div class="name">Adak Enterprise</div>
+        <div class="sub">Admin Panel</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-label">Main</div>
+      <a class="sidebar-link active" data-section="dashboard" href="#">
+        <i class="fas fa-tachometer-alt"></i> Dashboard
+      </a>
+      <a class="sidebar-link" data-section="sales" href="#">
+        <i class="fas fa-receipt"></i> Sales & Entries
+        <span class="badge" id="pendingBadge">0</span>
+      </a>
+      <a class="sidebar-link" data-section="clients" href="#">
+        <i class="fas fa-users"></i> Client History
+      </a>
+      <a class="sidebar-link" data-section="notifications" href="#">
+        <i class="fas fa-bell"></i> Notifications
+      </a>
+
+      <div class="sidebar-section-label">Management</div>
+      <a class="sidebar-link" data-section="services" href="#">
+        <i class="fas fa-concierge-bell"></i> Services
+      </a>
+      <a class="sidebar-link" data-section="shopinfo" href="#">
+        <i class="fas fa-store"></i> Shop Info
+      </a>
+      <a class="sidebar-link" data-section="content" href="#">
+        <i class="fas fa-edit"></i> Content & Banners
+      </a>
+
+      <div class="sidebar-section-label">Account</div>
+      <a class="sidebar-link" data-section="settings" href="#">
+        <i class="fas fa-cog"></i> Settings
+      </a>
+      <a class="sidebar-link" href="/" target="_blank">
+        <i class="fas fa-external-link-alt"></i> View Website
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <button onclick="logout()" class="sidebar-link" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.65)">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- ─── Main Wrapper ───────────────────────────────────────────────────── -->
+  <div class="main-wrapper">
+    <div class="admin-topbar">
+      <button id="sidebarToggle" class="topbar-btn" style="display:none;padding:8px">
+        <i class="fas fa-bars"></i>
+      </button>
+      <span class="topbar-title" id="topbarTitle">Dashboard</span>
+      <div class="topbar-actions">
+        <button class="topbar-btn" onclick="location.reload()"><i class="fas fa-sync-alt"></i></button>
+        <div class="admin-avatar" id="adminUsername">A</div>
+        <button class="topbar-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+
+    <div class="page-content">
+
+      <!-- ═══════════════════════ DASHBOARD ══════════════════════════════════ -->
+      <section class="page-section active" id="sec-dashboard">
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card blue"><div class="stat-icon blue"><i class="fas fa-rupee-sign"></i></div><div class="stat-value" id="statRevenue">₹0</div><div class="stat-label">Total Revenue</div></div>
+          <div class="stat-card green"><div class="stat-icon green"><i class="fas fa-receipt"></i></div><div class="stat-value" id="statTotal">0</div><div class="stat-label">Total Sales</div></div>
+          <div class="stat-card orange"><div class="stat-icon orange"><i class="fas fa-calendar-day"></i></div><div class="stat-value" id="statToday">0</div><div class="stat-label">Today's Sales</div></div>
+          <div class="stat-card red"><div class="stat-icon red"><i class="fas fa-exclamation-triangle"></i></div><div class="stat-value" id="statDue">₹0</div><div class="stat-label">Total Due Amount</div></div>
+        </div>
+
+        <div class="grid-2">
+          <!-- Recent Sales -->
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Recent Sales</div><div class="card-sub">Latest 5 entries</div></div>
+              <button class="btn btn-primary btn-sm" onclick="showSection('sales')"><i class="fas fa-arrow-right"></i> View All</button>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead><tr><th>Client</th><th>Service</th><th>Amount</th><th>Status</th></tr></thead>
+                <tbody id="recentSalesTable"><tr><td colspan="4" class="text-center" style="padding:20px;color:var(--gray)"><i class="fas fa-spinner fa-spin"></i></td></tr></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Pending Dues -->
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Pending Bills</div><div class="card-sub">Clients with due amounts</div></div>
+              <button class="btn btn-primary btn-sm" onclick="showSection('sales');setTimeout(()=>{document.getElementById('filterStatus').value='pending';loadSales()},200)">View All</button>
+            </div>
+            <div id="pendingList" style="display:flex;flex-direction:column;gap:10px">
+              <div style="text-align:center;color:var(--gray);padding:20px"><i class="fas fa-spinner fa-spin"></i></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════ SALES ═════════════════════════════════════ -->
+      <section class="page-section" id="sec-sales">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Sales & Log Entries</div><div class="card-sub">Manage all client sale entries</div></div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost btn-sm" onclick="exportSales()"><i class="fas fa-file-excel"></i> Export Excel</button>
+              <button class="btn btn-primary btn-sm" onclick="openSaleModal()"><i class="fas fa-plus"></i> New Entry</button>
+            </div>
+          </div>
+
+          <!-- Filters -->
+          <div class="filter-row">
+            <div class="form-group"><label>Status</label>
+              <select class="form-control" id="filterStatus" onchange="loadSales()">
+                <option value="">All</option>
+                <option value="pending">Pending</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
+            <div class="form-group"><label>From Date</label>
+              <input type="date" class="form-control" id="filterDateFrom" onchange="loadSales()" />
+            </div>
+            <div class="form-group"><label>To Date</label>
+              <input type="date" class="form-control" id="filterDateTo" onchange="loadSales()" />
+            </div>
+            <div class="form-group"><label>Phone</label>
+              <input type="text" class="form-control" id="filterPhone" placeholder="Search by phone" onkeyup="debounce(loadSales,400)()" />
+            </div>
+            <div class="form-group"><label>&nbsp;</label>
+              <button class="btn btn-ghost btn-sm" onclick="clearFilters()"><i class="fas fa-times"></i> Clear</button>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th><th>Client</th><th>Phone</th><th>Services</th>
+                  <th>Total</th><th>Paid</th><th>Due</th><th>Status</th>
+                  <th>Date</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="salesTable"><tr><td colspan="10" style="text-align:center;padding:30px;color:var(--gray)"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr></tbody>
+            </table>
+          </div>
+          <div id="salesPagination" style="margin-top:16px"></div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════ CLIENT HISTORY ════════════════════════════ -->
+      <section class="page-section" id="sec-clients">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Client History</div><div class="card-sub">Search client history by phone number</div></div>
+          </div>
+          <div style="display:flex;gap:12px;margin-bottom:20px">
+            <input type="text" class="form-control" id="clientPhoneSearch" placeholder="Enter client phone number..." style="max-width:300px" />
+            <button class="btn btn-primary" onclick="searchClientHistory()"><i class="fas fa-search"></i> Search</button>
+          </div>
+          <div id="clientHistoryResult">
+            <div class="empty-state"><i class="fas fa-user-clock"></i><h3>Search for a Client</h3><p>Enter a phone number above to view the client's complete history.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════ NOTIFICATIONS ════════════════════════════ -->
+      <section class="page-section" id="sec-notifications">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Notification Log</div><div class="card-sub">SMS and notification history</div></div>
+            <button class="btn btn-primary btn-sm" onclick="openCustomNotifModal()"><i class="fas fa-paper-plane"></i> Send Custom SMS</button>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead><tr><th>#</th><th>Client</th><th>Phone</th><th>Message</th><th>Status</th><th>Sent At</th></tr></thead>
+              <tbody id="notifTable"><tr><td colspan="6" style="text-align:center;padding:30px;color:var(--gray)"><i class="fas fa-spinner fa-spin"></i></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════ SERVICES ══════════════════════════════════ -->
+      <section class="page-section" id="sec-services">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Manage Services</div><div class="card-sub">Add, edit, or delete services and prices</div></div>
+            <button class="btn btn-primary btn-sm" onclick="openServiceModal()"><i class="fas fa-plus"></i> Add Service</button>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Icon</th><th>Service (EN)</th><th>Service (BN)</th><th>Category</th><th>Price</th><th>Active</th><th>Actions</th></tr></thead>
+              <tbody id="servicesTable"><tr><td colspan="7" style="text-align:center;padding:30px;color:var(--gray)"><i class="fas fa-spinner fa-spin"></i></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════ SHOP INFO ══════════════════════════════════ -->
+      <section class="page-section" id="sec-shopinfo">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Shop Info & Location</div><div class="card-sub">Changes here update the public website immediately</div></div>
+            <button class="btn btn-primary" onclick="saveShopInfo()"><i class="fas fa-save"></i> Save Changes</button>
+          </div>
+          <form id="shopInfoForm" class="form-row" style="grid-template-columns:1fr 1fr;gap:20px" onsubmit="(e)=>e.preventDefault()">
+            <div>
+              <div class="form-group"><label>Shop Name</label><input type="text" class="form-control" id="si_shop_name" /></div>
+              <div class="form-group"><label>Proprietor</label><input type="text" class="form-control" id="si_proprietor" /></div>
+              <div class="form-group"><label>Address Line 1</label><input type="text" class="form-control" id="si_address_line1" /></div>
+              <div class="form-group"><label>Address Line 2 (City, District, PIN)</label><input type="text" class="form-control" id="si_address_line2" /></div>
+              <div class="form-group"><label>State</label><input type="text" class="form-control" id="si_state" value="West Bengal" /></div>
+              <div class="form-group"><label>PIN Code</label><input type="text" class="form-control" id="si_pincode" /></div>
+            </div>
+            <div>
+              <div class="form-group"><label>Phone Number</label><input type="text" class="form-control" id="si_phone" /></div>
+              <div class="form-group"><label>WhatsApp Number (with country code, no +)</label><input type="text" class="form-control" id="si_whatsapp" placeholder="919876543210" /></div>
+              <div class="form-group"><label>Email</label><input type="email" class="form-control" id="si_email" /></div>
+              <div class="form-group"><label>Office Hours</label><input type="text" class="form-control" id="si_office_hours" placeholder="Mon–Sat: 9AM – 7PM" /></div>
+              <div class="form-group"><label>Google Maps Embed URL</label><input type="text" class="form-control" id="si_map_embed_url" placeholder="https://www.google.com/maps/embed?..." /></div>
+              <div class="form-group"><label>Facebook URL</label><input type="text" class="form-control" id="si_facebook_url" /></div>
+              <div class="form-group"><label>Instagram URL</label><input type="text" class="form-control" id="si_instagram_url" /></div>
+            </div>
+          </form>
+          <div style="margin-top:8px">
+            <div class="form-group"><label>English Tagline</label><input type="text" class="form-control" id="si_tagline_en" /></div>
+            <div class="form-group"><label>Bengali Tagline</label><input type="text" class="form-control" id="si_tagline_bn" /></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════ CONTENT & BANNERS ══════════════════════════ -->
+      <section class="page-section" id="sec-content">
+        <div class="grid-2" style="margin-bottom:24px">
+          <!-- Logo Card -->
+          <div class="card" style="margin-bottom:0">
+            <div class="card-header">
+              <div><div class="card-title">Site Logo</div><div class="card-sub">Change the logo for the website</div></div>
+            </div>
+            <div style="display:flex;gap:16px;align-items:center">
+              <div id="logoPreviewWrapper" style="width:70px;height:70px;background:var(--bg);border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid var(--border)">
+                 <i class="fas fa-landmark" style="font-size:24px;color:var(--gray-light)"></i>
+              </div>
+              <div style="flex:1">
+                <input type="file" id="logoUploadInput" accept="image/*" style="display:none" onchange="uploadLogo(event)" />
+                <button class="btn btn-outline" onclick="document.getElementById('logoUploadInput').click()"><i class="fas fa-upload"></i> Upload new logo</button>
+                <div class="form-hint">Max file size: 2MB</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notice Card -->
+          <div class="card" style="margin-bottom:0">
+            <div class="card-header">
+              <div><div class="card-title">Home Notice</div><div class="card-sub">Edit announcement text</div></div>
+              <button class="btn btn-primary" onclick="saveContent()"><i class="fas fa-save"></i></button>
+            </div>
+            <div class="form-group" style="margin-bottom:10px">
+              <input type="text" class="form-control" id="ct_notice_en" placeholder="English text (Leave blank to hide)" />
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <input type="text" class="form-control" id="ct_notice_bn" placeholder="Bengali text (খালি রাখুন লুকাতে)" />
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Banner / Cover Images</div><div class="card-sub">Manage homepage banner images</div></div>
+            <button class="btn btn-primary btn-sm" onclick="openBannerModal()"><i class="fas fa-plus"></i> Add Banner</button>
+          </div>
+          <div id="bannersList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-top:8px">
+            <div style="text-align:center;color:var(--gray);padding:40px;grid-column:1/-1"><i class="fas fa-spinner fa-spin"></i></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════ SETTINGS ══════════════════════════════════ -->
+      <section class="page-section" id="sec-settings">
+        <div class="card" style="max-width:480px">
+          <div class="card-header"><div class="card-title">Change Password</div></div>
+          <form id="changePwdForm" onsubmit="changePassword(event)">
+            <div class="form-group"><label>Current Password</label><input type="password" class="form-control" id="curPwd" required /></div>
+            <div class="form-group"><label>New Password</label><input type="password" class="form-control" id="newPwd" required /></div>
+            <div class="form-group"><label>Confirm New Password</label><input type="password" class="form-control" id="confPwd" required /></div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-key"></i> Update Password</button>
+          </form>
+        </div>
+      </section>
+
+    </div><!-- end page-content -->
+  </div><!-- end main-wrapper -->
+</div><!-- end admin-layout -->
+
+<!-- ─── MODALS ─────────────────────────────────────────────────────────────── -->
+
+<!-- Sale Modal -->
+<div class="modal-overlay" id="saleModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="saleModalTitle">New Sale Entry</h3>
+      <button class="modal-close" onclick="closeModal('saleModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="saleId" />
+      <div class="form-row">
+        <div class="form-group"><label>Client Name <span class="required-star">*</span></label><input type="text" class="form-control" id="saleClientName" required /></div>
+        <div class="form-group"><label>Phone <span class="required-star">*</span></label><input type="tel" class="form-control" id="saleClientPhone" required /></div>
+      </div>
+      <div class="form-group"><label>Address (Optional)</label><input type="text" class="form-control" id="saleClientAddress" /></div>
+      <div class="form-group">
+        <label>Services Taken <span class="required-star">*</span></label>
+        <div id="saleServicesCheckboxes" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:180px;overflow-y:auto;padding:8px;border:1.5px solid var(--border);border-radius:8px">
+          <div style="color:var(--gray);font-size:0.85rem;padding:8px"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+        </div>
+      </div>
+      <div class="form-group"><label>Other / Custom Service</label><input type="text" class="form-control" id="saleCustomService" placeholder="Type additional service if not in list" /></div>
+      <div class="form-row">
+        <div class="form-group"><label>Total Amount (₹) <span class="required-star">*</span></label><input type="number" class="form-control" id="saleTotalAmount" min="0" step="0.01" onchange="calcDue()" /></div>
+        <div class="form-group"><label>Amount Paid (₹)</label><input type="number" class="form-control" id="saleAmountPaid" min="0" step="0.01" value="0" onchange="calcDue()" /></div>
+      </div>
+      <div class="form-group"><label>Due Amount</label><input type="text" class="form-control" id="saleDueAmount" readonly style="background:var(--bg);font-weight:700;color:var(--danger)" /></div>
+      <div class="form-row">
+        <div class="form-group"><label>Status</label>
+          <select class="form-control" id="saleStatus">
+            <option value="pending">Pending</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Notes</label><input type="text" class="form-control" id="saleNotes" /></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('saleModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSale()"><i class="fas fa-save"></i> Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- Service Modal -->
+<div class="modal-overlay" id="serviceModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="serviceModalTitle">Add Service</h3>
+      <button class="modal-close" onclick="closeModal('serviceModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="serviceId" />
+      <div class="form-row">
+        <div class="form-group"><label>Service Name (English) <span class="required-star">*</span></label><input type="text" class="form-control" id="svcNameEn" required /></div>
+        <div class="form-group"><label>Service Name (Bengali) <span class="required-star">*</span></label><input type="text" class="form-control" id="svcNameBn" required /></div>
+      </div>
+      <div class="form-group"><label>Description (English)</label><textarea class="form-control" id="svcDescEn" rows="2"></textarea></div>
+      <div class="form-group"><label>Description (Bengali)</label><textarea class="form-control" id="svcDescBn" rows="2"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>Price <span class="required-star">*</span></label><input type="text" class="form-control" id="svcPrice" placeholder="e.g. Starting ₹100" required /></div>
+        <div class="form-group"><label>Category</label>
+          <input type="text" class="form-control" id="svcCategory" list="catSuggestions" placeholder="e.g. ID Card, Forms, Print" />
+          <datalist id="catSuggestions"><option value="Forms"><option value="Print"><option value="ID Card"><option value="Certificate"><option value="Payments"><option value="Travel"><option value="Health"><option value="General"></datalist>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Icon (Font Awesome class)</label><input type="text" class="form-control" id="svcIcon" placeholder="fas fa-file-alt" /></div>
+        <div class="form-group"><label>Sort Order</label><input type="number" class="form-control" id="svcOrder" value="0" min="0" /></div>
+      </div>
+      <div class="form-group">
+        <label><input type="checkbox" id="svcActive" checked style="margin-right:6px" /> Active (visible on website)</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('serviceModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveService()"><i class="fas fa-save"></i> Save Service</button>
+    </div>
+  </div>
+</div>
+
+<!-- View Sale Modal -->
+<div class="modal-overlay" id="viewSaleModal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header"><h3>Sale Details</h3><button class="modal-close" onclick="closeModal('viewSaleModal')"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body" id="viewSaleContent"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('viewSaleModal')">Close</button>
+      <button class="btn btn-success" id="markDoneBtn" onclick="markDoneFromModal()"><i class="fas fa-check"></i> Mark Done & Notify</button>
+      <button class="btn btn-outline" onclick="printReceipt()"><i class="fas fa-print"></i> Print Receipt</button>
+    </div>
+  </div>
+</div>
+
+<!-- Banner Modal -->
+<div class="modal-overlay" id="bannerModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Add Banner Image</h3><button class="modal-close" onclick="closeModal('bannerModal')"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Banner Title</label><input type="text" class="form-control" id="bannerTitle" /></div>
+      <div class="form-group"><label>Upload Image</label><input type="file" class="form-control" id="bannerFile" accept="image/*" /></div>
+      <div class="form-group"><label>Or Image URL</label><input type="text" class="form-control" id="bannerUrl" placeholder="https://..." /></div>
+      <div class="form-group"><label>Sort Order</label><input type="number" class="form-control" id="bannerOrder" value="0" min="0" /></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('bannerModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBanner()"><i class="fas fa-save"></i> Add Banner</button>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Notification Modal -->
+<div class="modal-overlay" id="customNotifModal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header"><h3>Send Custom SMS</h3><button class="modal-close" onclick="closeModal('customNotifModal')"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Client Name</label><input type="text" class="form-control" id="notifClientName" /></div>
+      <div class="form-group"><label>Phone Number <span class="required-star">*</span></label><input type="tel" class="form-control" id="notifPhone" required /></div>
+      <div class="form-group"><label>Message <span class="required-star">*</span></label><textarea class="form-control" id="notifMessage" rows="4" required></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('customNotifModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="sendCustomNotif()"><i class="fas fa-paper-plane"></i> Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- Print Receipt (hidden) -->
+<div id="receiptPrint" style="display:none"></div>
+
+<script src="js/admin.js"></script>
+<script>
+// ─── Auth Guard ───────────────────────────────────────────────────────────────
+if (!requireAuth()) { /* redirected */ }
+
+// ─── Section Navigation ───────────────────────────────────────────────────────
+const sectionTitles = {
+  dashboard: 'Dashboard', sales: 'Sales & Entries', clients: 'Client History',
+  notifications: 'Notifications', services: 'Manage Services',
+  shopinfo: 'Shop Info & Location', content: 'Content & Banners', settings: 'Settings'
+};
+
+function showSection(name) {
+  document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  document.getElementById(`sec-${name}`)?.classList.add('active');
+  document.querySelector(`[data-section="${name}"]`)?.classList.add('active');
+  document.getElementById('topbarTitle').textContent = sectionTitles[name] || name;
+
+  // Lazy load section data
+  const loaders = {
+    dashboard: loadDashboard,
+    sales: loadSales,
+    clients: () => {},
+    notifications: loadNotifications,
+    services: loadServicesAdmin,
+    shopinfo: loadShopInfo,
+    content: loadContent,
+    settings: () => {}
+  };
+  loaders[name]?.();
+}
+
+document.querySelectorAll('.sidebar-link[data-section]').forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    showSection(link.dataset.section);
+  });
+});
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const stats = await adminFetch(`${API}/sales/stats`);
+    document.getElementById('statRevenue').textContent = formatCurrency(stats.total_revenue);
+    document.getElementById('statTotal').textContent = stats.total_sales;
+    document.getElementById('statToday').textContent = stats.today_sales;
+    document.getElementById('statDue').textContent = formatCurrency(stats.total_due);
+    document.getElementById('pendingBadge').textContent = stats.pending_count;
+
+    // Recent Sales
+    const tbody = document.getElementById('recentSalesTable');
+    if (!stats.recent_sales?.length) {
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state" style="padding:20px"><p>No sales yet</p></div></td></tr>';
+    } else {
+      tbody.innerHTML = stats.recent_sales.map(s => `
+        <tr>
+          <td><div class="td-main">${s.client_name}</div><div class="td-sub">${s.client_phone}</div></td>
+          <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.services_taken}</td>
+          <td>${formatCurrency(s.total_amount)}</td>
+          <td><span class="badge badge-${s.status}">${s.status}</span></td>
+        </tr>`).join('');
+    }
+
+    // Pending list
+    const pendingList = document.getElementById('pendingList');
+    const pending = stats.recent_sales?.filter(s => s.status === 'pending' && s.amount_due > 0) || [];
+    if (!pending.length) {
+      pendingList.innerHTML = '<div class="empty-state" style="padding:20px"><i class="fas fa-check-circle" style="color:var(--accent)"></i><p>No pending dues!</p></div>';
+    } else {
+      pendingList.innerHTML = pending.map(s => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--bg);border-radius:8px;border-left:3px solid var(--danger)">
+          <div>
+            <div style="font-weight:600;font-size:0.9rem">${s.client_name}</div>
+            <div style="font-size:0.78rem;color:var(--gray)">${s.client_phone} · Due: <strong style="color:var(--danger)">${formatCurrency(s.amount_due)}</strong></div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="viewSale(${s.id})">View</button>
+        </div>`).join('');
+    }
+  } catch (e) { showToast('Failed to load dashboard: ' + e.message, 'error'); }
+}
+
+// ─── SALES ────────────────────────────────────────────────────────────────────
+let allSales = [];
+let salesPage = 1;
+const SALES_PER_PAGE = 15;
+let currentViewSaleId = null;
+
+async function loadSales() {
+  const status = document.getElementById('filterStatus')?.value || '';
+  const from = document.getElementById('filterDateFrom')?.value || '';
+  const to = document.getElementById('filterDateTo')?.value || '';
+  const phone = document.getElementById('filterPhone')?.value || '';
+  const params = new URLSearchParams();
+  if (status) params.set('status', status);
+  if (from) params.set('date_from', from);
+  if (to) params.set('date_to', to);
+  if (phone) params.set('phone', phone);
+
+  const tbody = document.getElementById('salesTable');
+  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--gray)"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
+
+  try {
+    allSales = await adminFetch(`${API}/sales?${params}`);
+    salesPage = 1;
+    renderSalesTable();
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--danger);padding:20px">Failed to load</td></tr>';
+    showToast('Failed to load sales: ' + e.message, 'error');
+  }
+}
+
+function renderSalesTable() {
+  const tbody = document.getElementById('salesTable');
+  const page = paginate(allSales, SALES_PER_PAGE, salesPage);
+  if (!page.length) {
+    tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state" style="padding:40px"><i class="fas fa-receipt"></i><h3>No entries found</h3><p>Try adjusting your filters or add a new sale.</p></div></td></tr>';
+    document.getElementById('salesPagination').innerHTML = '';
+    return;
+  }
+  tbody.innerHTML = page.map((s, i) => `
+    <tr>
+      <td><span class="text-muted">${((salesPage-1)*SALES_PER_PAGE)+i+1}</span></td>
+      <td><div class="td-main">${s.client_name}</div><div class="td-sub">${s.client_address || ''}</div></td>
+      <td>${s.client_phone}</td>
+      <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${s.services_taken}">${s.services_taken}</td>
+      <td><strong>${formatCurrency(s.total_amount)}</strong></td>
+      <td style="color:var(--accent)">${formatCurrency(s.amount_paid)}</td>
+      <td><strong style="color:${s.amount_due>0?'var(--danger)':'var(--accent)'}">${formatCurrency(s.amount_due)}</strong></td>
+      <td><span class="badge badge-${s.status}">${s.status}</span></td>
+      <td><div class="td-sub">${formatDate(s.entry_date)}</div></td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-ghost btn-icon-sm" onclick="viewSale(${s.id})" title="View"><i class="fas fa-eye"></i></button>
+          <button class="btn btn-outline btn-icon-sm" onclick="editSale(${s.id})" title="Edit"><i class="fas fa-edit"></i></button>
+          ${s.status!=='done' ? `<button class="btn btn-success btn-icon-sm" onclick="markDone(${s.id})" title="Mark Done & Notify"><i class="fas fa-check"></i></button>` : ''}
+          <button class="btn btn-danger btn-icon-sm" onclick="deleteSale(${s.id})" title="Delete"><i class="fas fa-trash"></i></button>
+        </div>
+      </td>
+    </tr>`).join('');
+
+  // Pagination
+  const pag = document.getElementById('salesPagination');
+  const totalPages = Math.ceil(allSales.length / SALES_PER_PAGE);
+  if (totalPages > 1) {
+    let html = '<div class="pagination">';
+    for (let i = 1; i <= totalPages; i++) {
+      html += `<button class="page-btn ${i===salesPage?'active':''}" onclick="salesPage=${i};renderSalesTable()">${i}</button>`;
+    }
+    html += '</div>';
+    pag.innerHTML = html;
+  } else { pag.innerHTML = ''; }
+}
+
+function clearFilters() {
+  ['filterStatus','filterDateFrom','filterDateTo','filterPhone'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  loadSales();
+}
+
+function calcDue() {
+  const total = parseFloat(document.getElementById('saleTotalAmount').value) || 0;
+  const paid = parseFloat(document.getElementById('saleAmountPaid').value) || 0;
+  document.getElementById('saleDueAmount').value = `₹${(total - paid).toFixed(2)}`;
+}
+
+let availableServices = [];
+
+async function openSaleModal(saleData = null) {
+  document.getElementById('saleModalTitle').textContent = saleData ? 'Edit Sale Entry' : 'New Sale Entry';
+  document.getElementById('saleId').value = saleData?.id || '';
+  document.getElementById('saleClientName').value = saleData?.client_name || '';
+  document.getElementById('saleClientPhone').value = saleData?.client_phone || '';
+  document.getElementById('saleClientAddress').value = saleData?.client_address || '';
+  document.getElementById('saleCustomService').value = '';
+  document.getElementById('saleTotalAmount').value = saleData?.total_amount || '';
+  document.getElementById('saleAmountPaid').value = saleData?.amount_paid || 0;
+  document.getElementById('saleNotes').value = saleData?.notes || '';
+  document.getElementById('saleStatus').value = saleData?.status || 'pending';
+  calcDue();
+
+  // Load services checkboxes
+  const container = document.getElementById('saleServicesCheckboxes');
+  if (!availableServices.length) {
+    try { availableServices = await adminFetch(`${API}/services`); } catch (e) { availableServices = []; }
+  }
+  const selected = saleData ? (saleData.services_taken || '').split(',').map(s => s.trim()) : [];
+  container.innerHTML = availableServices.map(s => `
+    <label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;cursor:pointer">
+      <input type="checkbox" value="${s.name_en}" ${selected.includes(s.name_en) ? 'checked' : ''} class="svc-checkbox" />
+      ${s.name_en}
+    </label>`).join('');
+
+  openModal('saleModal');
+}
+
+async function editSale(id) {
+  try {
+    const sale = await adminFetch(`${API}/sales/${id}`);
+    openSaleModal(sale);
+  } catch (e) { showToast('Failed to load sale: ' + e.message, 'error'); }
+}
+
+async function saveSale() {
+  const id = document.getElementById('saleId').value;
+  const checked = [...document.querySelectorAll('.svc-checkbox:checked')].map(c => c.value);
+  const custom = document.getElementById('saleCustomService').value.trim();
+  if (custom) checked.push(custom);
+
+  const data = {
+    client_name: document.getElementById('saleClientName').value.trim(),
+    client_phone: document.getElementById('saleClientPhone').value.trim(),
+    client_address: document.getElementById('saleClientAddress').value.trim(),
+    services_taken: checked.join(', '),
+    total_amount: parseFloat(document.getElementById('saleTotalAmount').value) || 0,
+    amount_paid: parseFloat(document.getElementById('saleAmountPaid').value) || 0,
+    status: document.getElementById('saleStatus').value,
+    notes: document.getElementById('saleNotes').value.trim()
+  };
+
+  if (!data.client_name || !data.client_phone || !data.services_taken || !data.total_amount) {
+    return showToast('Please fill all required fields', 'error');
+  }
+
+  try {
+    if (id) {
+      await adminFetch(`${API}/sales/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+      showToast('Sale updated successfully', 'success');
+    } else {
+      await adminFetch(`${API}/sales`, { method: 'POST', body: JSON.stringify(data) });
+      showToast('Sale entry created', 'success');
+    }
+    closeModal('saleModal');
+    loadSales();
+    loadDashboard();
+  } catch (e) { showToast('Error saving: ' + e.message, 'error'); }
+}
+
+async function deleteSale(id) {
+  if (!confirmAction('Delete this sale entry? This cannot be undone.')) return;
+  try {
+    await adminFetch(`${API}/sales/${id}`, { method: 'DELETE' });
+    showToast('Sale deleted', 'success');
+    loadSales();
+    loadDashboard();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function viewSale(id) {
+  currentViewSaleId = id;
+  try {
+    const s = await adminFetch(`${API}/sales/${id}`);
+    document.getElementById('viewSaleContent').innerHTML = `
+      <div style="display:grid;gap:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="badge badge-${s.status}" style="font-size:0.85rem">${s.status.toUpperCase()}</span>
+          <span style="font-size:0.82rem;color:var(--gray)">${formatDate(s.entry_date)}</span>
+        </div>
+        <div style="background:var(--bg);border-radius:10px;padding:16px;display:grid;gap:8px">
+          <div><strong>Client:</strong> ${s.client_name}</div>
+          <div><strong>Phone:</strong> ${s.client_phone}</div>
+          ${s.client_address ? `<div><strong>Address:</strong> ${s.client_address}</div>` : ''}
+        </div>
+        <div style="background:var(--bg);border-radius:10px;padding:16px">
+          <div style="margin-bottom:8px"><strong>Services:</strong></div>
+          <div style="color:var(--dark-3)">${s.services_taken}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+          <div style="text-align:center;background:var(--bg);border-radius:10px;padding:14px">
+            <div style="font-size:1.3rem;font-weight:800;color:var(--dark)">${formatCurrency(s.total_amount)}</div>
+            <div style="font-size:0.75rem;color:var(--gray)">Total</div>
+          </div>
+          <div style="text-align:center;background:var(--accent-light);border-radius:10px;padding:14px">
+            <div style="font-size:1.3rem;font-weight:800;color:var(--accent)">${formatCurrency(s.amount_paid)}</div>
+            <div style="font-size:0.75rem;color:var(--gray)">Paid</div>
+          </div>
+          <div style="text-align:center;background:var(--danger-light);border-radius:10px;padding:14px">
+            <div style="font-size:1.3rem;font-weight:800;color:var(--danger)">${formatCurrency(s.amount_due)}</div>
+            <div style="font-size:0.75rem;color:var(--gray)">Due</div>
+          </div>
+        </div>
+        ${s.notes ? `<div style="background:var(--warning-light);border-radius:8px;padding:10px;font-size:0.85rem"><strong>Notes:</strong> ${s.notes}</div>` : ''}
+      </div>`;
+    const doneBtn = document.getElementById('markDoneBtn');
+    doneBtn.style.display = s.status === 'done' ? 'none' : 'inline-flex';
+    openModal('viewSaleModal');
+  } catch (e) { showToast('Failed to load sale details', 'error'); }
+}
+
+async function markDone(id) {
+  if (!confirmAction('Mark this sale as Done and send SMS notification to client?')) return;
+  try {
+    const res = await adminFetch(`${API}/notify/done/${id}`, { method: 'POST' });
+    showToast(`Marked done. Notification: ${res.notification}`, 'success');
+    loadSales(); loadDashboard();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function markDoneFromModal() {
+  if (currentViewSaleId) {
+    closeModal('viewSaleModal');
+    await markDone(currentViewSaleId);
+  }
+}
+
+function printReceipt() {
+  const content = document.getElementById('viewSaleContent')?.innerHTML;
+  if (!content) return;
+  const win = window.open('', '_blank');
+  win.document.write(`<html><head><title>Receipt – Adak Enterprise</title><style>body{font-family:sans-serif;padding:20px;font-size:14px}h2{color:#1a56db}</style></head><body><h2>Adak Enterprise – Tathya Mitra Kendra</h2>${content}</body></html>`);
+  win.print();
+}
+
+function exportSales() {
+  const token = getToken();
+  window.open(`${API}/sales/export?token=${token}`, '_blank');
+  // Fallback: direct download via fetch
+  fetch(`${API}/sales/export`, { headers: { Authorization: `Bearer ${token}` } })
+    .then(r => r.blob())
+    .then(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'sales_export.xlsx';
+      a.click();
+    }).catch(() => {});
+}
+
+// ─── CLIENT HISTORY ───────────────────────────────────────────────────────────
+async function searchClientHistory() {
+  const phone = document.getElementById('clientPhoneSearch').value.trim();
+  if (!phone) return showToast('Enter a phone number', 'error');
+  const container = document.getElementById('clientHistoryResult');
+  container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray)"><i class="fas fa-spinner fa-spin fa-2x"></i></div>';
+  try {
+    const history = await adminFetch(`${API}/sales/client/${phone}`);
+    if (!history.length) {
+      container.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><h3>No Results</h3><p>No history found for this phone number.</p></div>';
+      return;
+    }
+    const total = history.reduce((s, r) => s + r.total_amount, 0);
+    const due = history.reduce((s, r) => s + r.amount_due, 0);
+    container.innerHTML = `
+      <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+        <div style="background:var(--primary-light);border-radius:10px;padding:12px 20px;text-align:center"><div style="font-size:1.4rem;font-weight:800;color:var(--primary)">${history.length}</div><div style="font-size:0.75rem;color:var(--gray)">Visits</div></div>
+        <div style="background:var(--accent-light);border-radius:10px;padding:12px 20px;text-align:center"><div style="font-size:1.4rem;font-weight:800;color:var(--accent)">${formatCurrency(total)}</div><div style="font-size:0.75rem;color:var(--gray)">Total Business</div></div>
+        <div style="background:var(--danger-light);border-radius:10px;padding:12px 20px;text-align:center"><div style="font-size:1.4rem;font-weight:800;color:var(--danger)">${formatCurrency(due)}</div><div style="font-size:0.75rem;color:var(--gray)">Pending Due</div></div>
+      </div>
+      <div class="table-container">
+        <table><thead><tr><th>Date</th><th>Services</th><th>Total</th><th>Paid</th><th>Due</th><th>Status</th></tr></thead>
+        <tbody>${history.map(s => `<tr>
+          <td>${formatDate(s.entry_date)}</td>
+          <td>${s.services_taken}</td>
+          <td>${formatCurrency(s.total_amount)}</td>
+          <td>${formatCurrency(s.amount_paid)}</td>
+          <td style="color:${s.amount_due>0?'var(--danger)':'inherit'}">${formatCurrency(s.amount_due)}</td>
+          <td><span class="badge badge-${s.status}">${s.status}</span></td>
+        </tr>`).join('')}</tbody>
+        </table>
+      </div>`;
+  } catch (e) { container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Error</h3><p>' + e.message + '</p></div>'; }
+}
+
+// ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
+async function loadNotifications() {
+  const tbody = document.getElementById('notifTable');
+  try {
+    const notifs = await adminFetch(`${API}/notify`);
+    if (!notifs.length) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state" style="padding:40px"><i class="fas fa-bell-slash"></i><h3>No Notifications</h3></div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = notifs.map((n, i) => `
+      <tr>
+        <td>${i+1}</td>
+        <td><div class="td-main">${n.client_name}</div></td>
+        <td>${n.client_phone}</td>
+        <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${n.message}">${n.message}</td>
+        <td><span class="badge badge-${n.status==='sent'?'done':(n.status==='failed'?'failed':'pending')}">${n.status}</span></td>
+        <td><span class="td-sub">${n.sent_at ? formatDate(n.sent_at) : '–'}</span></td>
+      </tr>`).join('');
+  } catch (e) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--danger)">Failed to load</td></tr>'; }
+}
+
+function openCustomNotifModal() {
+  ['notifClientName','notifPhone','notifMessage'].forEach(id => { document.getElementById(id).value = ''; });
+  openModal('customNotifModal');
+}
+
+async function sendCustomNotif() {
+  const phone = document.getElementById('notifPhone').value.trim();
+  const message = document.getElementById('notifMessage').value.trim();
+  if (!phone || !message) return showToast('Phone and message are required', 'error');
+  try {
+    await adminFetch(`${API}/notify/custom`, { method: 'POST', body: JSON.stringify({ phone, message, client_name: document.getElementById('notifClientName').value }) });
+    showToast('Notification sent', 'success');
+    closeModal('customNotifModal');
+    loadNotifications();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+// ─── SERVICES ─────────────────────────────────────────────────────────────────
+async function loadServicesAdmin() {
+  const tbody = document.getElementById('servicesTable');
+  try {
+    const services = await adminFetch(`${API}/services/all`);
+    availableServices = services.filter(s => s.is_active);
+    if (!services.length) {
+      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state" style="padding:40px"><i class="fas fa-concierge-bell"></i><h3>No services</h3></div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = services.map(s => `
+      <tr>
+        <td><i class="${s.icon || 'fas fa-file-alt'}" style="font-size:1.2rem;color:var(--primary)"></i></td>
+        <td><div class="td-main">${s.name_en}</div></td>
+        <td><div class="td-sub">${s.name_bn}</div></td>
+        <td><span class="badge badge-info">${s.category}</span></td>
+        <td><strong>${s.price}</strong></td>
+        <td>
+          <button class="btn btn-sm ${s.is_active?'btn-success':'btn-ghost'}" onclick="toggleServiceActive(${s.id},${s.is_active})">
+            ${s.is_active ? '<i class="fas fa-check"></i> Active' : '<i class="fas fa-times"></i> Off'}
+          </button>
+        </td>
+        <td>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-outline btn-icon-sm" onclick="editService(${s.id})" title="Edit"><i class="fas fa-edit"></i></button>
+            <button class="btn btn-danger btn-icon-sm" onclick="deleteService(${s.id})" title="Delete"><i class="fas fa-trash"></i></button>
+          </div>
+        </td>
+      </tr>`).join('');
+  } catch (e) { showToast('Failed to load services', 'error'); }
+}
+
+function openServiceModal(serviceData = null) {
+  document.getElementById('serviceModalTitle').textContent = serviceData ? 'Edit Service' : 'Add Service';
+  document.getElementById('serviceId').value = serviceData?.id || '';
+  document.getElementById('svcNameEn').value = serviceData?.name_en || '';
+  document.getElementById('svcNameBn').value = serviceData?.name_bn || '';
+  document.getElementById('svcDescEn').value = serviceData?.description_en || '';
+  document.getElementById('svcDescBn').value = serviceData?.description_bn || '';
+  document.getElementById('svcPrice').value = serviceData?.price || '';
+  document.getElementById('svcCategory').value = serviceData?.category || '';
+  document.getElementById('svcIcon').value = serviceData?.icon || '';
+  document.getElementById('svcOrder').value = serviceData?.sort_order || 0;
+  document.getElementById('svcActive').checked = serviceData ? !!serviceData.is_active : true;
+  openModal('serviceModal');
+}
+
+let allServicesCache = [];
+
+async function editService(id) {
+  if (!allServicesCache.length) {
+    try { allServicesCache = await adminFetch(`${API}/services/all`); } catch (e) {}
+  }
+  const svc = allServicesCache.find(s => s.id === id);
+  if (svc) openServiceModal(svc);
+}
+
+async function saveService() {
+  const id = document.getElementById('serviceId').value;
+  const data = {
+    name_en: document.getElementById('svcNameEn').value.trim(),
+    name_bn: document.getElementById('svcNameBn').value.trim(),
+    description_en: document.getElementById('svcDescEn').value.trim(),
+    description_bn: document.getElementById('svcDescBn').value.trim(),
+    price: document.getElementById('svcPrice').value.trim(),
+    category: document.getElementById('svcCategory').value.trim() || 'General',
+    icon: document.getElementById('svcIcon').value.trim() || 'fas fa-file-alt',
+    sort_order: parseInt(document.getElementById('svcOrder').value) || 0,
+    is_active: document.getElementById('svcActive').checked ? 1 : 0
+  };
+  if (!data.name_en || !data.name_bn || !data.price) return showToast('English name, Bengali name, and price required', 'error');
+  try {
+    if (id) {
+      await adminFetch(`${API}/services/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+      showToast('Service updated', 'success');
+    } else {
+      await adminFetch(`${API}/services`, { method: 'POST', body: JSON.stringify(data) });
+      showToast('Service added', 'success');
+    }
+    closeModal('serviceModal');
+    allServicesCache = [];
+    availableServices = [];
+    loadServicesAdmin();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function toggleServiceActive(id, current) {
+  try {
+    const services = await adminFetch(`${API}/services/all`);
+    const svc = services.find(s => s.id === id);
+    if (!svc) return;
+    await adminFetch(`${API}/services/${id}`, { method: 'PUT', body: JSON.stringify({ ...svc, is_active: current ? 0 : 1 }) });
+    allServicesCache = []; availableServices = [];
+    loadServicesAdmin();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function deleteService(id) {
+  if (!confirmAction('Delete this service?')) return;
+  try {
+    await adminFetch(`${API}/services/${id}`, { method: 'DELETE' });
+    showToast('Service deleted', 'success');
+    allServicesCache = []; availableServices = [];
+    loadServicesAdmin();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+// ─── SHOP INFO ────────────────────────────────────────────────────────────────
+async function loadShopInfo() {
+  try {
+    const info = await adminFetch(`${API}/shopinfo`);
+    const fields = ['shop_name','proprietor','address_line1','address_line2','state','pincode','phone','whatsapp','email','office_hours','map_embed_url','facebook_url','instagram_url','tagline_en','tagline_bn'];
+    fields.forEach(f => {
+      const el = document.getElementById(`si_${f}`);
+      if (el) el.value = info[f] || '';
+    });
+  } catch (e) { showToast('Failed to load shop info', 'error'); }
+}
+
+async function saveShopInfo() {
+  const fields = ['shop_name','proprietor','address_line1','address_line2','state','pincode','phone','whatsapp','email','office_hours','map_embed_url','facebook_url','instagram_url','tagline_en','tagline_bn'];
+  const data = {};
+  fields.forEach(f => { data[f] = document.getElementById(`si_${f}`)?.value || ''; });
+  try {
+    await adminFetch(`${API}/shopinfo`, { method: 'PUT', body: JSON.stringify(data) });
+    showToast('Shop info saved successfully!', 'success');
+  } catch (e) { showToast('Error saving: ' + e.message, 'error'); }
+}
+
+// ─── CONTENT & BANNERS ───────────────────────────────────────────────────────
+async function loadContent() {
+  try {
+    const content = await adminFetch(`${API}/content`);
+    document.getElementById('ct_notice_en').value = content.home_notice_en?.en || '';
+    document.getElementById('ct_notice_bn').value = content.home_notice_en?.bn || '';
+    
+    // Load Logo
+    if (content.site_logo && content.site_logo.en) {
+      document.getElementById('logoPreviewWrapper').innerHTML = `<img src="${content.site_logo.en}" style="width:100%;height:100%;object-fit:contain" />`;
+    }
+  } catch (e) { showToast('Failed to load content', 'error'); }
+  loadBanners();
+}
+
+async function uploadLogo(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const formData = new FormData();
+  formData.append('logo', file);
+  try {
+    const res = await adminFetchForm(`${API}/content/logo`, formData);
+    document.getElementById('logoPreviewWrapper').innerHTML = `<img src="${res.url}" style="width:100%;height:100%;object-fit:contain" />`;
+    showToast('Logo updated successfully!', 'success');
+  } catch(e) {
+    showToast('Failed to upload logo: ' + e.message, 'error');
+  }
+}
+
+async function saveContent() {
+  const data = {
+    home_notice_en: {
+      en: document.getElementById('ct_notice_en').value,
+      bn: document.getElementById('ct_notice_bn').value
+    }
+  };
+  try {
+    await adminFetch(`${API}/content`, { method: 'PUT', body: JSON.stringify(data) });
+    showToast('Content saved!', 'success');
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function loadBanners() {
+  const container = document.getElementById('bannersList');
+  try {
+    const banners = await adminFetch(`${API}/content/banners/all`);
+    if (!banners.length) {
+      container.innerHTML = '<div class="empty-state" style="grid-column:1/-1;padding:40px"><i class="fas fa-images"></i><h3>No Banners</h3><p>Add your first banner image.</p></div>';
+      return;
+    }
+    container.innerHTML = banners.map(b => `
+      <div style="background:var(--white);border-radius:10px;padding:12px;border:1.5px solid var(--border);text-align:center">
+        <img src="${b.image_url}" alt="${b.title||'Banner'}" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:10px" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22/>'">
+        <div style="font-size:0.82rem;font-weight:600;margin-bottom:8px">${b.title || '(No title)'}</div>
+        <div style="display:flex;gap:6px;justify-content:center">
+          <span class="badge ${b.is_active?'badge-done':'badge-pending'}">${b.is_active?'Active':'Off'}</span>
+          <button class="btn btn-danger btn-sm" onclick="deleteBanner(${b.id})"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>`).join('');
+  } catch (e) { container.innerHTML = '<p style="color:var(--danger)">Failed to load banners</p>'; }
+}
+
+function openBannerModal() {
+  ['bannerTitle','bannerUrl','bannerOrder'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('bannerFile').value = '';
+  openModal('bannerModal');
+}
+
+async function saveBanner() {
+  const formData = new FormData();
+  const file = document.getElementById('bannerFile').files[0];
+  const url = document.getElementById('bannerUrl').value.trim();
+  if (!file && !url) return showToast('Upload an image or enter a URL', 'error');
+  if (file) formData.append('image', file);
+  if (url) formData.append('image_url', url);
+  formData.append('title', document.getElementById('bannerTitle').value);
+  formData.append('sort_order', document.getElementById('bannerOrder').value || 0);
+  try {
+    await adminFetchForm(`${API}/content/banners`, formData);
+    showToast('Banner added!', 'success');
+    closeModal('bannerModal');
+    loadBanners();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function deleteBanner(id) {
+  if (!confirmAction('Delete this banner?')) return;
+  try {
+    await adminFetch(`${API}/content/banners/${id}`, { method: 'DELETE' });
+    showToast('Banner deleted', 'success');
+    loadBanners();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+// ─── SETTINGS ────────────────────────────────────────────────────────────────
+async function changePassword(e) {
+  e.preventDefault();
+  const cur = document.getElementById('curPwd').value;
+  const nw = document.getElementById('newPwd').value;
+  const conf = document.getElementById('confPwd').value;
+  if (nw !== conf) return showToast('New passwords do not match', 'error');
+  if (nw.length < 6) return showToast('Password must be at least 6 characters', 'error');
+  try {
+    await adminFetch(`${API}/auth/change-password`, { method: 'POST', body: JSON.stringify({ currentPassword: cur, newPassword: nw }) });
+    showToast('Password changed successfully!', 'success');
+    document.getElementById('changePwdForm').reset();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+// ─── Debounce ─────────────────────────────────────────────────────────────────
+function debounce(fn, delay) {
+  let t;
+  return function () { clearTimeout(t); t = setTimeout(() => fn.apply(this), delay); };
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  if (!requireAuth()) return;
+  loadDashboard();
+  // Set avatar initials
+  const username = sessionStorage.getItem('adminUser') || 'A';
+  document.getElementById('adminUsername').textContent = username.charAt(0).toUpperCase();
+});
+</script>
+</body>
+</html>
