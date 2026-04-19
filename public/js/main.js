@@ -225,6 +225,10 @@ async function loadContentIntegration() {
         iconDiv.style.background = 'transparent';
         iconDiv.style.boxShadow = 'none';
       });
+      const aboutLogo = document.getElementById('aboutPageLogo');
+      if (aboutLogo) {
+        aboutLogo.outerHTML = `<img src="${logoUrl}" style="width:150px;height:150px;object-fit:contain;" alt="Logo" />`;
+      }
     }
 
   } catch (e) { console.warn('Could not load site content', e); }
