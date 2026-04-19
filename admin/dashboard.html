@@ -107,7 +107,10 @@
           <div class="card">
             <div class="card-header">
               <div><div class="card-title">Pending Bills</div><div class="card-sub">Clients with due amounts</div></div>
-              <button class="btn btn-primary btn-sm" onclick="showSection('sales');setTimeout(()=>{document.getElementById('filterStatus').value='pending';loadSales()},200)">View All</button>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-primary btn-sm" onclick="showSection('sales');setTimeout(()=>{document.getElementById('filterStatus').value='pending';loadSales()},200)">All</button>
+                <button class="btn btn-outline btn-sm" onclick="openMassWhatsAppModal()" style="border-color:#25D366;color:#25D366"><i class="fab fa-whatsapp"></i> Broadcast</button>
+              </div>
             </div>
             <div id="pendingList" style="display:flex;flex-direction:column;gap:10px">
               <div style="text-align:center;color:var(--gray);padding:20px"><i class="fas fa-spinner fa-spin"></i></div>
@@ -185,10 +188,13 @@
       <!-- ═══════════════════════ NOTIFICATIONS ════════════════════════════ -->
       <section class="page-section" id="sec-notifications">
         <div class="card">
-          <div class="card-header">
-            <div><div class="card-title">Notification Log</div><div class="card-sub">SMS and notification history</div></div>
-            <button class="btn btn-primary btn-sm" onclick="openCustomNotifModal()"><i class="fas fa-paper-plane"></i> Send Custom SMS</button>
-          </div>
+            <div class="card-header">
+              <div><div class="card-title">Notification Log</div><div class="card-sub">SMS and notification history</div></div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-outline btn-sm" onclick="openMassWhatsAppModal()" style="border-color:#25D366;color:#25D366"><i class="fab fa-whatsapp"></i> Mass WhatsApp Broadcast</button>
+                <button class="btn btn-primary btn-sm" onclick="openCustomNotifModal()"><i class="fas fa-paper-plane"></i> Send Custom SMS</button>
+              </div>
+            </div>
           <div class="table-container">
             <table>
               <thead><tr><th>#</th><th>Client</th><th>Phone</th><th>Message</th><th>Status</th><th>Sent At</th></tr></thead>
@@ -397,10 +403,11 @@
   <div class="modal" style="max-width:500px">
     <div class="modal-header"><h3>Sale Details</h3><button class="modal-close" onclick="closeModal('viewSaleModal')"><i class="fas fa-times"></i></button></div>
     <div class="modal-body" id="viewSaleContent"></div>
-    <div class="modal-footer">
+    <div class="modal-footer" style="flex-wrap:wrap;justify-content:flex-end">
       <button class="btn btn-ghost" onclick="closeModal('viewSaleModal')">Close</button>
-      <button class="btn btn-success" id="markDoneBtn" onclick="markDoneFromModal()"><i class="fas fa-check"></i> Mark Done & Notify</button>
-      <button class="btn btn-outline" onclick="printReceipt()"><i class="fas fa-print"></i> Print Receipt</button>
+      <button class="btn btn-outline" onclick="printReceipt()"><i class="fas fa-print"></i> Print</button>
+      <button class="btn" style="background:#25D366;color:white;border:none" onclick="sendWhatsAppReceiptFromModal()"><i class="fab fa-whatsapp"></i> Send Receipt</button>
+      <button class="btn btn-success" id="markDoneBtn" onclick="markDoneFromModal()"><i class="fas fa-check"></i> Mark Done</button>
     </div>
   </div>
 </div>
@@ -1064,6 +1071,70 @@ async function deleteBanner(id) {
     showToast('Banner deleted', 'success');
     loadBanners();
   } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+// ─── WHATSAPP INTEGRATION ───────────────────────────────────────────────────────
+async function sendWhatsAppReceiptFromModal() {
+  if (!currentViewSaleId) return;
+  try {
+    const s = await adminFetch(`${API}/sales/${currentViewSaleId}`);
+    let phone = (s.client_phone || '').replace(/[^0-9]/g, '');
+    if (phone.length === 10) phone = '91' + phone;
+    
+    let text = `Hello ${s.client_name},\n\nHere is your receipt from *Adak Enterprise*:\n\n*Services:* ${s.services_taken}\n*Total Amount:* ₹${s.total_amount}\n*Amount Paid:* ₹${s.amount_paid}\n*Due Amount:* ₹${s.amount_due}\n*Status:* ${s.status.toUpperCase()}\n\nThank you for choosing us!`;
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+  } catch (e) {
+    showToast('Failed to prepare receipt: ' + e.message, 'error');
+  }
+}
+
+async function openMassWhatsAppModal() {
+  try {
+    const sales = await adminFetch(`${API}/sales?status=pending`);
+    const dues = sales.filter(s => s.amount_due > 0);
+    
+    if (dues.length === 0) {
+      return showToast('No pending dues found!', 'success');
+    }
+    
+    let html = `<div style="max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:10px">`;
+    dues.forEach(s => {
+      let phone = (s.client_phone || '').replace(/[^0-9]/g, '');
+      if (phone.length === 10) phone = '91' + phone;
+      
+      const text = `Reminder from *Adak Enterprise*:\n\nHello ${s.client_name},\nYour work "${s.services_taken}" has a pending due of *₹${s.amount_due}*. Please clear it at your earliest convenience.\n\nThank you!`;
+      
+      html += `
+       <div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg);padding:14px;border-radius:6px;border-left:4px solid #25D366">
+         <div>
+           <div style="font-weight:600;margin-bottom:4px">${s.client_name}</div>
+           <div style="font-size:0.8rem;color:var(--danger)"><i class="fas fa-exclamation-circle"></i> Due: ₹${s.amount_due}</div>
+         </div>
+         <a href="https://wa.me/${phone}?text=${encodeURIComponent(text)}" target="_blank" class="btn btn-sm" style="background:#25D366;color:white;text-decoration:none" onclick="this.style.opacity='0.6';this.innerHTML='<i class=\\'fas fa-check\\'></i> Sent'">
+           <i class="fab fa-whatsapp"></i> Send
+         </a>
+       </div>`;
+    });
+    html += `</div>`;
+    
+    const tempModal = document.createElement('div');
+    tempModal.className = 'modal-overlay open';
+    tempModal.innerHTML = `
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Mass WhatsApp Broadcaster</h3>
+          <button class="modal-close" onclick="this.closest('.modal-overlay').remove()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="padding-top:10px">
+          <p style="font-size:0.85rem;color:var(--gray);margin-bottom:16px">Click the Send button next to each client to instantly open a pre-written WhatsApp message to their number!</p>
+          ${html}
+        </div>
+      </div>
+    `;
+    document.body.appendChild(tempModal);
+  } catch (e) {
+    showToast('Failed to load pending bills: ' + e.message, 'error');
+  }
 }
 
 // ─── SETTINGS ────────────────────────────────────────────────────────────────
