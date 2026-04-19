@@ -1,48 +1,50 @@
 const express = require('express');
 const router = express.Router();
-const { db, save, genId } = require('../database/db');
+const { supabase } = require('../database/db');
 const auth = require('../middleware/auth');
 const XLSX = require('xlsx');
 
-router.get('/', auth, (req, res) => {
+router.get('/', auth, async (req, res) => {
   const { status, date_from, date_to, phone, service } = req.query;
-  let results = [...db.sales].sort((a, b) => new Date(b.entry_date) - new Date(a.entry_date));
+  let query = supabase.from('sales').select('*').order('entry_date', { ascending: false });
 
-  if (status) results = results.filter(s => s.status === status);
-  if (date_from) {
-    const from = new Date(date_from);
-    results = results.filter(s => new Date(s.entry_date) >= from);
-  }
-  if (date_to) {
-    const to = new Date(date_to);
-    to.setHours(23, 59, 59, 999);
-    results = results.filter(s => new Date(s.entry_date) <= to);
-  }
-  if (phone) results = results.filter(s => s.client_phone.includes(phone));
-  if (service) results = results.filter(s => s.services_taken.toLowerCase().includes(service.toLowerCase()));
+  if (status) query = query.eq('status', status);
+  if (date_from) query = query.gte('entry_date', date_from);
+  if (date_to) query = query.lte('entry_date', date_to + ' 23:59:59');
+  if (phone) query = query.ilike('client_phone', `%${phone}%`);
+  if (service) query = query.ilike('services_taken', `%${service}%`);
 
-  res.json(results);
+  const { data, error } = await query;
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
 });
 
-router.get('/stats', auth, (req, res) => {
+router.get('/stats', auth, async (req, res) => {
+  const { data: sales, error } = await supabase.from('sales').select('*');
+  if (error || !sales) return res.status(500).json({ error: error?.message });
+
   const today = new Date().toISOString().split('T')[0];
-  const todaySales = db.sales.filter(s => s.entry_date.startsWith(today));
-  const pendingSales = db.sales.filter(s => s.status === 'pending' && s.amount_due > 0);
+  const todaySales = sales.filter(s => s.entry_date.startsWith(today));
+  const pendingSales = sales.filter(s => s.status === 'pending' && s.amount_due > 0);
+  
+  sales.sort((a,b) => new Date(b.entry_date) - new Date(a.entry_date));
 
   res.json({
-    total_sales: db.sales.length,
-    total_revenue: db.sales.reduce((acc, s) => acc + s.total_amount, 0),
+    total_sales: sales.length,
+    total_revenue: sales.reduce((acc, s) => acc + s.total_amount, 0),
     pending_count: pendingSales.length,
     total_due: pendingSales.reduce((acc, s) => acc + s.amount_due, 0),
     today_sales: todaySales.length,
     today_revenue: todaySales.reduce((acc, s) => acc + s.total_amount, 0),
-    recent_sales: [...db.sales].sort((a, b) => new Date(b.entry_date) - new Date(a.entry_date)).slice(0, 5)
+    recent_sales: sales.slice(0, 5)
   });
 });
 
-router.get('/export', auth, (req, res) => {
-  const results = [...db.sales].sort((a, b) => new Date(b.entry_date) - new Date(a.entry_date));
-  const ws = XLSX.utils.json_to_sheet(results);
+router.get('/export', auth, async (req, res) => {
+  const { data, error } = await supabase.from('sales').select('*').order('entry_date', { ascending: false });
+  if (error) return res.status(500).send('Database Error');
+
+  const ws = XLSX.utils.json_to_sheet(data);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Sales');
   const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
@@ -51,13 +53,13 @@ router.get('/export', auth, (req, res) => {
   res.send(buf);
 });
 
-router.get('/:id', auth, (req, res) => {
-  const sale = db.sales.find(s => s.id === parseInt(req.params.id));
-  if (!sale) return res.status(404).json({ error: 'Sale not found' });
-  res.json(sale);
+router.get('/:id', auth, async (req, res) => {
+  const { data, error } = await supabase.from('sales').select('*').eq('id', req.params.id).single();
+  if (error || !data) return res.status(404).json({ error: 'Sale not found' });
+  res.json(data);
 });
 
-router.post('/', auth, (req, res) => {
+router.post('/', auth, async (req, res) => {
   const { client_name, client_phone, client_address, services_taken, total_amount, amount_paid, status, notes } = req.body;
   if (!client_name || !client_phone || !services_taken || total_amount === undefined) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -65,49 +67,44 @@ router.post('/', auth, (req, res) => {
 
   const total = parseFloat(total_amount) || 0;
   const paid = parseFloat(amount_paid || 0);
-  
-  const sale = {
-    id: genId(), client_name, client_phone, client_address: client_address || '',
+
+  const { data, error } = await supabase.from('sales').insert([{
+    client_name, client_phone, client_address: client_address || '',
     services_taken: Array.isArray(services_taken) ? services_taken.join(', ') : services_taken,
     total_amount: total, amount_paid: paid, amount_due: total - paid,
-    status: status || 'pending', notes: notes || '', entry_date: new Date().toISOString()
-  };
-  db.sales.push(sale);
-  save();
-  res.json({ id: sale.id, message: 'Sale created' });
+    status: status || 'pending', notes: notes || ''
+  }]).select().single();
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ id: data.id, message: 'Sale created' });
 });
 
-router.put('/:id', auth, (req, res) => {
-  const id = parseInt(req.params.id);
-  const sale = db.sales.find(s => s.id === id);
-  if (!sale) return res.status(404).json({ error: 'Sale not found' });
-
+router.put('/:id', auth, async (req, res) => {
   const { client_name, client_phone, client_address, services_taken, total_amount, amount_paid, status, notes } = req.body;
   const total = parseFloat(total_amount) || 0;
   const paid = parseFloat(amount_paid || 0);
 
-  sale.client_name = client_name; sale.client_phone = client_phone;
-  sale.client_address = client_address || '';
-  sale.services_taken = Array.isArray(services_taken) ? services_taken.join(', ') : services_taken;
-  sale.total_amount = total; sale.amount_paid = paid; sale.amount_due = total - paid;
-  sale.status = status || 'pending'; sale.notes = notes || '';
-  
-  save();
+  const { error } = await supabase.from('sales').update({
+    client_name, client_phone, client_address: client_address || '',
+    services_taken: Array.isArray(services_taken) ? services_taken.join(', ') : services_taken,
+    total_amount: total, amount_paid: paid, amount_due: total - paid,
+    status: status || 'pending', notes: notes || '', updated_at: new Date().toISOString()
+  }).eq('id', req.params.id);
+
+  if (error) return res.status(500).json({ error: error.message });
   res.json({ message: 'Sale updated' });
 });
 
-router.delete('/:id', auth, (req, res) => {
-  const initialLength = db.sales.length;
-  db.sales = db.sales.filter(s => s.id !== parseInt(req.params.id));
-  if (db.sales.length === initialLength) return res.status(404).json({ error: 'Sale not found' });
-  save();
+router.delete('/:id', auth, async (req, res) => {
+  const { error } = await supabase.from('sales').delete().eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
   res.json({ message: 'Sale deleted' });
 });
 
-router.get('/client/:phone', auth, (req, res) => {
-  const history = db.sales.filter(s => s.client_phone.includes(req.params.phone))
-    .sort((a,b) => new Date(b.entry_date) - new Date(a.entry_date));
-  res.json(history);
+router.get('/client/:phone', auth, async (req, res) => {
+  const { data, error } = await supabase.from('sales').select('*').ilike('client_phone', `%${req.params.phone}%`).order('entry_date', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
 });
 
 module.exports = router;
