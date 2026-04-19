@@ -216,10 +216,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Map embed
-  if (info.map_embed_url) {
-    const mapEl = document.getElementById('mapContainer');
-    if (mapEl) {
-      mapEl.innerHTML = `<iframe class="map-frame" src="${info.map_embed_url}" allowfullscreen loading="lazy"></iframe>`;
+  const mapEl = document.getElementById('mapContainer');
+  if (mapEl) {
+    let mapUrl = info.map_embed_url;
+    
+    // Auto-fix if they pasted a raw google maps link instead of an embed link
+    if (mapUrl && mapUrl.includes('google.com') && !mapUrl.includes('embed') && !mapUrl.includes('output=embed')) {
+       const addressQuery = encodeURIComponent((info.address_line1 || '') + ' ' + (info.address_line2 || 'West Bengal'));
+       mapUrl = `https://maps.google.com/maps?q=${addressQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+    }
+    
+    // If they left it totally blank, auto-generate from their typed address!
+    if (!mapUrl) {
+       const addressQuery = encodeURIComponent((info.address_line1 || '') + ' ' + (info.address_line2 || 'West Bengal'));
+       mapUrl = `https://maps.google.com/maps?q=${addressQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+    }
+
+    if (mapUrl) {
+      mapEl.innerHTML = `<iframe class="map-frame" src="${mapUrl}" allowfullscreen loading="lazy" style="border:0; width:100%; height:300px; border-radius:8px;"></iframe>`;
     }
   }
 
