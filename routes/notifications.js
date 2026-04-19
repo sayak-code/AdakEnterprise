@@ -31,8 +31,7 @@ router.post('/done/:saleId', auth, async (req, res) => {
   const { data: sale, error: saleErr } = await supabase.from('sales').select('*').eq('id', req.params.saleId).single();
   if (saleErr || !sale) return res.status(404).json({ error: 'Sale not found' });
 
-  const amount_due = sale.total_amount - sale.amount_paid;
-  await supabase.from('sales').update({ status: 'done', amount_due }).eq('id', sale.id);
+  await supabase.from('sales').update({ status: 'done', amount_due: 0, amount_paid: sale.total_amount }).eq('id', sale.id);
 
   try {
     await supabase.from('notifications').insert([{
