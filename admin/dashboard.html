@@ -740,10 +740,10 @@ async function viewSale(id) {
 }
 
 async function markDone(id) {
-  if (!confirmAction('Mark this sale as Done and send SMS notification to client?')) return;
+  if (!confirmAction('Mark this sale as Done?')) return;
   try {
     const res = await adminFetch(`${API}/notify/done/${id}`, { method: 'POST' });
-    showToast(`Marked done. Notification: ${res.notification}`, 'success');
+    showToast(`Marked done successfully`, 'success');
     loadSales(); loadDashboard();
   } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
@@ -1081,7 +1081,7 @@ async function sendWhatsAppReceiptFromModal() {
     let phone = (s.client_phone || '').replace(/[^0-9]/g, '');
     if (phone.length === 10) phone = '91' + phone;
     
-    let text = `Hello ${s.client_name},\n\nHere is your receipt from *Adak Enterprise*:\n\n*Services:* ${s.services_taken}\n*Total Amount:* ₹${s.total_amount}\n*Amount Paid:* ₹${s.amount_paid}\n*Due Amount:* ₹${s.amount_due}\n*Status:* ${s.status.toUpperCase()}\n\nThank you for choosing us!`;
+    let text = `Hello ${s.client_name},\n\nHere is your receipt from *Adak Enterprise*:\n\n*Services:* ${s.services_taken}\n*Total Amount:* ₹${s.total_amount}\n*Amount Paid:* ₹${s.amount_paid}\n*Due Amount:* ₹${s.amount_due}\n*Status:* ${s.status.toUpperCase()}\n\nThank you so much for choosing Adak Enterprise! Have a great day!`;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
   } catch (e) {
     showToast('Failed to prepare receipt: ' + e.message, 'error');
@@ -1102,7 +1102,7 @@ async function openMassWhatsAppModal() {
       let phone = (s.client_phone || '').replace(/[^0-9]/g, '');
       if (phone.length === 10) phone = '91' + phone;
       
-      const text = `Reminder from *Adak Enterprise*:\n\nHello ${s.client_name},\nYour work "${s.services_taken}" has a pending due of *₹${s.amount_due}*. Please clear it at your earliest convenience.\n\nThank you!`;
+      const text = `Hello ${s.client_name},\n\nYour work for "${s.services_taken}" has been fully completed! \n\nPlease clear your pending due of *₹${s.amount_due}* and collect your documents/works at your earliest convenience.\n\nThank you,\nAdak Enterprise`;
       
       html += `
        <div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg);padding:14px;border-radius:6px;border-left:4px solid #25D366">

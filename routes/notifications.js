@@ -34,30 +34,14 @@ router.post('/done/:saleId', auth, async (req, res) => {
   const amount_due = sale.total_amount - sale.amount_paid;
   await supabase.from('sales').update({ status: 'done', amount_due }).eq('id', sale.id);
 
-  const { data: shopInfoData } = await supabase.from('shop_info').select('*');
-  let shopName = 'Our Shop';
-  if (shopInfoData) {
-    const snItem = shopInfoData.find(i => i.key === 'shop_name');
-    if (snItem) shopName = snItem.value;
-  }
-
-  let message = `Hello ${sale.client_name},\nYour service (${sale.services_taken}) is complete! `;
-  if (amount_due > 0) message += `Pending due: Rs.${amount_due}. `;
-  message += `\nThank you, ${shopName}`;
-
   try {
-    await sendSMS(sale.client_phone, message);
     await supabase.from('notifications').insert([{
       sale_id: sale.id, client_name: sale.client_name, client_phone: sale.client_phone, 
-      message, channel: 'sms', status: 'sent'
+      message: 'Marked Done manually without SMS', channel: 'system', status: 'sent'
     }]);
-    res.json({ message: 'Marked done and SMS sent', notification: 'success' });
+    res.json({ message: 'Marked done successfully' });
   } catch (error) {
-    await supabase.from('notifications').insert([{
-      sale_id: sale.id, client_name: sale.client_name, client_phone: sale.client_phone, 
-      message, channel: 'sms', status: 'failed'
-    }]);
-    res.status(500).json({ error: 'Failed to send SMS', details: error.message });
+    res.status(500).json({ error: 'Failed to mark done', details: error.message });
   }
 });
 
