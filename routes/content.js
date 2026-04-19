@@ -6,16 +6,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = path.join(__dirname, '..', 'uploads');
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, `banner_${Date.now()}${path.extname(file.originalname)}`);
-  }
-});
+const storage = multer.memoryStorage();
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
 // Banners
@@ -34,8 +25,14 @@ router.get('/banners/all', auth, async (req, res) => {
 });
 
 router.post('/banners', auth, upload.single('image'), async (req, res) => {
-  const { title, image_url, sort_order } = req.body;
-  const finalUrl = req.file ? `/uploads/${req.file.filename}` : (image_url || '');
+  const { title, sort_order } = req.body;
+  let finalUrl = req.body.image_url || '';
+  
+  if (req.file) {
+    const base64Str = req.file.buffer.toString('base64');
+    finalUrl = `data:${req.file.mimetype};base64,${base64Str}`;
+  }
+
   if (!finalUrl) return res.status(400).json({ error: 'Image file or URL required' });
 
   const { data, error } = await supabase.from('banners').insert([{
@@ -59,11 +56,6 @@ router.put('/banners/:id', auth, async (req, res) => {
 });
 
 router.delete('/banners/:id', auth, async (req, res) => {
-  const { data: banner } = await supabase.from('banners').select('image_url').eq('id', req.params.id).single();
-  if (banner && banner.image_url && banner.image_url.startsWith('/uploads/')) {
-    const filePath = path.join(__dirname, '..', banner.image_url);
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-  }
   const { error } = await supabase.from('banners').delete().eq('id', req.params.id);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ message: 'Banner deleted' });
@@ -104,15 +96,10 @@ router.put('/:key', auth, async (req, res) => {
 
 router.post('/logo', auth, upload.single('logo'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No logo file provided' });
-  const finalUrl = `/uploads/${req.file.filename}`;
   
-  // Optionally delete remote/local old logo
-  const { data: item } = await supabase.from('content').select('*').eq('key', 'site_logo').single();
-  if (item && item.value_en && item.value_en.startsWith('/uploads/')) {
-    const oldPath = path.join(__dirname, '..', item.value_en);
-    if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-  }
-
+  const base64Str = req.file.buffer.toString('base64');
+  const finalUrl = `data:${req.file.mimetype};base64,${base64Str}`;
+  
   const { error } = await supabase.from('content').upsert([{ key: 'site_logo', value_en: finalUrl, value_bn: '' }]);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ message: 'Logo updated', url: finalUrl });
