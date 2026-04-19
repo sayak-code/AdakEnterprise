@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact – Adak Enterprise Tathya Mitra Kendra</title>
+  <meta name="description" content="Contact Adak Enterprise Tathya Mitra Kendra – Get address, phone, WhatsApp, email and send us a message." />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div id="pageLoader" class="page-loader"><div class="loader-spinner"></div></div>
+<div id="noticeBanner" class="notice-banner"><div class="container"><div class="notice-inner"><i class="fas fa-bullhorn"></i><span class="notice-text"></span></div></div></div>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <div class="container">
+    <div class="topbar-inner">
+      <div class="topbar-left">
+        <span class="topbar-item"><i class="fas fa-clock"></i><span data-i18n="topbar_hours">Mon–Sat: 9AM – 7PM</span></span>
+        <span class="topbar-item"><i class="fas fa-phone"></i><a href="#" class="shop-phone"></a></span>
+      </div>
+      <div class="topbar-right">
+        <div class="lang-toggle">
+          <button class="lang-btn active" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="bn">বাং</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<header class="header" id="header">
+  <div class="container">
+    <nav class="navbar">
+      <a href="index.html" class="logo">
+        <div class="logo-icon"><i class="fas fa-landmark"></i></div>
+        <div class="logo-text"><div class="logo-name">Adak Enterprise</div><div class="logo-sub">Tathya Mitra Kendra</div></div>
+      </a>
+      <div class="nav-links">
+        <a href="index.html" class="nav-link" data-i18n="nav_home">Home</a>
+        <a href="services.html" class="nav-link" data-i18n="nav_services">Services</a>
+        <a href="about.html" class="nav-link" data-i18n="nav_about">About Us</a>
+        <a href="contact.html" class="nav-link active" data-i18n="nav_contact">Contact</a>
+        <a href="/admin/login.html" class="btn btn-primary btn-sm" style="margin-left:8px">Admin</a>
+      </div>
+      <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+    </nav>
+  </div>
+</header>
+
+<div class="mobile-menu-overlay" id="mobileOverlay"></div>
+<div class="mobile-menu" id="mobileMenu">
+  <div class="mobile-menu-header">
+    <a href="index.html" class="logo"><div class="logo-icon" style="width:36px;height:36px;font-size:1rem"><i class="fas fa-landmark"></i></div><div class="logo-text"><div class="logo-name" style="font-size:0.9rem">Adak Enterprise</div></div></a>
+    <button class="mobile-menu-close" id="mobileMenuClose"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="mobile-nav-links">
+    <a href="index.html" class="mobile-nav-link" data-i18n="nav_home">Home</a>
+    <a href="services.html" class="mobile-nav-link" data-i18n="nav_services">Services</a>
+    <a href="about.html" class="mobile-nav-link" data-i18n="nav_about">About Us</a>
+    <a href="contact.html" class="mobile-nav-link active" data-i18n="nav_contact">Contact</a>
+  </div>
+</div>
+
+<!-- Page Hero -->
+<section class="page-hero">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="index.html" data-i18n="nav_home">Home</a>
+      <i class="fas fa-chevron-right"></i>
+      <span data-i18n="nav_contact">Contact</span>
+    </div>
+    <h1 data-i18n="contact_title">Contact Us</h1>
+    <p data-i18n="contact_sub">We are here to help. Visit us, call us, or send a message.</p>
+  </div>
+</section>
+
+<!-- Contact Section -->
+<section class="section">
+  <div class="container">
+    <div class="contact-grid">
+      <!-- Contact Info -->
+      <div class="contact-info">
+        <h2>Adak Enterprise</h2>
+        <p class="contact-info-sub">Tathya Mitra Kendra – West Bengal</p>
+
+        <div class="contact-detail">
+          <div class="contact-detail-icon"><i class="fas fa-map-marker-alt"></i></div>
+          <div class="contact-detail-text">
+            <h4 data-i18n="contact_address_label">Address</h4>
+            <p class="shop-address">West Bengal, India</p>
+          </div>
+        </div>
+
+        <div class="contact-detail">
+          <div class="contact-detail-icon"><i class="fas fa-phone"></i></div>
+          <div class="contact-detail-text">
+            <h4 data-i18n="contact_phone_label">Phone</h4>
+            <a href="#" class="shop-phone"></a>
+          </div>
+        </div>
+
+        <div class="contact-detail">
+          <div class="contact-detail-icon"><i class="fas fa-clock"></i></div>
+          <div class="contact-detail-text">
+            <h4 data-i18n="contact_hours_label">Office Hours</h4>
+            <p class="shop-hours">Mon–Sat: 9AM – 7PM</p>
+          </div>
+        </div>
+
+        <div class="contact-detail" id="emailDetail" style="display:none">
+          <div class="contact-detail-icon"><i class="fas fa-envelope"></i></div>
+          <div class="contact-detail-text">
+            <h4 data-i18n="contact_email_label">Email</h4>
+            <a href="#" class="shop-email-link"><span class="shop-email"></span></a>
+          </div>
+        </div>
+
+        <div style="margin-top:32px">
+          <a href="#" id="waContactBtn" class="btn btn-secondary btn-lg wa-chat-btn" style="width:100%;justify-content:center">
+            <i class="fab fa-whatsapp"></i>
+            <span data-i18n="wa_chat">Chat on WhatsApp</span>
+          </a>
+        </div>
+
+        <!-- Map -->
+        <div style="margin-top:24px" id="mapContainer">
+          <div class="map-placeholder">
+            <i class="fas fa-map-marked-alt"></i>
+            <p>Map will appear here</p>
+            <p style="font-size:0.75rem;color:var(--gray-light)">Add Google Maps embed URL from Admin Panel</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Form -->
+      <div class="contact-form-card">
+        <h2 data-i18n="contact_title">Contact Us</h2>
+        <p data-i18n="contact_sub">We are here to help. Send us a message below.</p>
+        <form id="contactForm" novalidate>
+          <div class="form-row">
+            <div class="form-group">
+              <label data-i18n="form_name">Your Name</label>
+              <input type="text" class="form-control" id="cName" data-i18n-placeholder="form_name" placeholder="Your Name" required />
+            </div>
+            <div class="form-group">
+              <label data-i18n="form_phone">Phone Number</label>
+              <input type="tel" class="form-control" id="cPhone" data-i18n-placeholder="form_phone" placeholder="Phone Number" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="form_email">Email (Optional)</label>
+            <input type="email" class="form-control" id="cEmail" data-i18n-placeholder="form_email" placeholder="Email Address (Optional)" />
+          </div>
+          <div class="form-group">
+            <label data-i18n="form_message">Your Message</label>
+            <textarea class="form-control" id="cMessage" rows="5" data-i18n-placeholder="form_message" placeholder="Your Message" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center" id="contactSubmitBtn">
+            <i class="fas fa-paper-plane"></i>
+            <span data-i18n="form_submit">Send Message</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="logo footer-brand" style="margin-bottom:16px"><div class="logo-icon"><i class="fas fa-landmark"></i></div><div class="logo-text"><div class="logo-name">Adak Enterprise</div><div class="logo-sub">Tathya Mitra Kendra</div></div></div>
+        <p class="footer-desc" data-i18n="footer_desc">Your trusted Tathya Mitra Kendra for all government and digital services in West Bengal.</p>
+      </div>
+      <div>
+        <h4 class="footer-heading" data-i18n="footer_links">Quick Links</h4>
+        <ul class="footer-links">
+          <li><a href="index.html" class="footer-link"><i class="fas fa-chevron-right"></i><span data-i18n="nav_home">Home</span></a></li>
+          <li><a href="services.html" class="footer-link"><i class="fas fa-chevron-right"></i><span data-i18n="nav_services">Services</span></a></li>
+          <li><a href="about.html" class="footer-link"><i class="fas fa-chevron-right"></i><span data-i18n="nav_about">About Us</span></a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="footer-heading" data-i18n="footer_contact">Get In Touch</h4>
+        <ul class="footer-links">
+          <li class="footer-link"><i class="fas fa-map-marker-alt"></i><span class="shop-address"></span></li>
+          <li><a href="#" class="footer-link"><i class="fas fa-phone"></i><span class="shop-phone"></span></a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div style="border-top:1px solid rgba(255,255,255,0.08)"><div class="container"><div class="footer-bottom"><p data-i18n="footer_rights">© 2024 Adak Enterprise. All rights reserved.</p></div></div></div>
+</footer>
+
+<div class="whatsapp-float">
+  <div class="whatsapp-tooltip">Chat with us!</div>
+  <a href="#" id="waFloatBtn" class="whatsapp-btn" target="_blank"><i class="fab fa-whatsapp"></i></a>
+</div>
+
+<script src="js/i18n.js"></script>
+<script src="js/main.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadShopInfo();
+  const info = window._shopInfo || {};
+
+  // Set email
+  if (info.email) {
+    document.querySelectorAll('.shop-email').forEach(el => el.textContent = info.email);
+    document.querySelectorAll('.shop-email-link').forEach(el => el.href = `mailto:${info.email}`);
+    document.getElementById('emailDetail')?.style.setProperty('display', 'flex');
+  }
+
+  // Map embed
+  if (info.map_embed_url) {
+    const mapEl = document.getElementById('mapContainer');
+    if (mapEl) {
+      mapEl.innerHTML = `<iframe class="map-frame" src="${info.map_embed_url}" allowfullscreen loading="lazy"></iframe>`;
+    }
+  }
+
+  // Phone links
+  if (info.phone) {
+    document.querySelectorAll('.shop-phone').forEach(el => el.textContent = info.phone);
+    document.querySelector('.shop-phone-link')?.setAttribute('href', `tel:${info.phone}`);
+  }
+});
+</script>
+</body>
+</html>
