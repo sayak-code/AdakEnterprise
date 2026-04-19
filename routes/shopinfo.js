@@ -21,7 +21,7 @@ router.put('/', auth, async (req, res) => {
     return { key: k, value: String(updates[k] || '') };
   });
 
-  const { error } = await supabase.from('shop_info').upsert(updatesArray);
+  const { error } = await supabase.from('shop_info').upsert(updatesArray, { onConflict: 'key' });
   if (error) return res.status(500).json({ error: error.message });
   res.json({ message: 'Shop info updated successfully' });
 });
