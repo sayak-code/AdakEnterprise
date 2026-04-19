@@ -18,7 +18,8 @@ router.post('/login', async (req, res) => {
   if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
 
   const { data: user, error } = await supabase.from('users').select('*').eq('username', username).single();
-  if (error || !user) return res.status(401).json({ error: 'Invalid credentials' });
+  if (error) return res.status(401).json({ error: 'Supabase Error: ' + (error.message || JSON.stringify(error)) });
+  if (!user) return res.status(401).json({ error: 'Invalid credentials - User not found' });
 
   let valid = false;
   try {

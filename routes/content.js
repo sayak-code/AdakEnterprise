@@ -76,7 +76,9 @@ router.get('/', async (req, res) => {
   if (error) return res.status(500).json({ error: error.message });
   
   const content = {};
-  data.forEach(c => { content[c.key] = { en: c.value_en, bn: c.value_bn }; });
+  if (data) {
+    data.forEach(c => { content[c.key] = { en: c.value_en, bn: c.value_bn }; });
+  }
   res.json(content);
 });
 
