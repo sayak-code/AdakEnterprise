@@ -9,7 +9,9 @@ router.get('/', async (req, res) => {
   if (error) return res.status(500).json({ error: error.message });
   
   const info = {};
-  data.forEach(item => { info[item.key] = item.value; });
+  if (data) {
+    data.forEach(item => { info[item.key] = item.value; });
+  }
   res.json(info);
 });
 
