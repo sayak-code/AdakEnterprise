@@ -13,7 +13,7 @@ const translations = {
     topbar_address: 'West Bengal, India',
 
     // Hero
-    hero_badge: 'CSC / Tathya Mitra Kendra',
+    hero_badge: 'Sahaj Tathya Mitra Kendra',
     hero_title_1: 'Adak Enterprise',
     hero_title_2: 'Tathya Mitra Kendra',
     hero_tagline: 'Government & Online Services Made Easy',
@@ -117,7 +117,7 @@ const translations = {
     topbar_address: 'পশ্চিমবঙ্গ, ভারত',
 
     // Hero
-    hero_badge: 'সিএসসি / তথ্য মিত্র কেন্দ্র',
+    hero_badge: 'Sahaj Tathya Mitra Kendra',
     hero_title_1: 'অ্যাডাক এন্টারপ্রাইজ',
     hero_title_2: 'তথ্য মিত্র কেন্দ্র',
     hero_tagline: 'সরকারি ও অনলাইন সেবাগুলি সহজ করে',
