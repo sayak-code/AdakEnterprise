@@ -267,8 +267,14 @@
               </div>
               <div style="flex:1">
                 <input type="file" id="logoUploadInput" accept="image/*" style="display:none" onchange="uploadLogo(event)" />
-                <button class="btn btn-outline" onclick="document.getElementById('logoUploadInput').click()"><i class="fas fa-upload"></i> Upload new logo</button>
-                <div class="form-hint">Max file size: 2MB</div>
+                <div style="display:flex;gap:8px;margin-bottom:8px">
+                  <button class="btn btn-outline" onclick="document.getElementById('logoUploadInput').click()"><i class="fas fa-upload"></i> Upload File</button>
+                </div>
+                <div style="display:flex;gap:6px">
+                  <input type="url" id="logoUrlInput" class="form-control" placeholder="Or paste logo image URL..." style="font-size:0.82rem" />
+                  <button class="btn btn-primary btn-sm" onclick="saveLogoUrl()"><i class="fas fa-save"></i></button>
+                </div>
+                <div class="form-hint" style="margin-top:4px">PNG, JPG, WebP or direct image URL</div>
               </div>
             </div>
           </div>
@@ -980,6 +986,19 @@ async function saveShopInfo() {
 }
 
 // ─── CONTENT & BANNERS ───────────────────────────────────────────────────────
+function applySiteLogo(url) {
+  if (!url) return;
+  const sidebarIcon = document.querySelector('.sidebar-logo-icon');
+  if (sidebarIcon) {
+    sidebarIcon.innerHTML = `<img src="${url}" alt="Logo" style="width:100%;height:100%;object-fit:contain;border-radius:6px;" />`;
+    sidebarIcon.style.background = 'transparent';
+  }
+  const preview = document.getElementById('logoPreviewWrapper');
+  if (preview) {
+    preview.innerHTML = `<img src="${url}" alt="Logo" style="width:100%;height:100%;object-fit:contain;" />`;
+  }
+}
+
 async function loadContent() {
   try {
     const content = await adminFetch(`${API}/content`);
@@ -988,7 +1007,11 @@ async function loadContent() {
     
     // Load Logo
     if (content.site_logo && content.site_logo.en) {
-      document.getElementById('logoPreviewWrapper').innerHTML = `<img src="${content.site_logo.en}" style="width:100%;height:100%;object-fit:contain" />`;
+      applySiteLogo(content.site_logo.en);
+      const urlInput = document.getElementById('logoUrlInput');
+      if (urlInput && content.site_logo.en.startsWith('http')) {
+        urlInput.value = content.site_logo.en;
+      }
     }
   } catch (e) { showToast('Failed to load content', 'error'); }
   loadBanners();
@@ -1001,10 +1024,25 @@ async function uploadLogo(event) {
   formData.append('logo', file);
   try {
     const res = await adminFetchForm(`${API}/content/logo`, formData);
-    document.getElementById('logoPreviewWrapper').innerHTML = `<img src="${res.url}" style="width:100%;height:100%;object-fit:contain" />`;
+    applySiteLogo(res.url);
     showToast('Logo updated successfully!', 'success');
   } catch(e) {
     showToast('Failed to upload logo: ' + e.message, 'error');
+  }
+}
+
+async function saveLogoUrl() {
+  const url = document.getElementById('logoUrlInput')?.value?.trim();
+  if (!url) return showToast('Please enter a valid image URL', 'error');
+  try {
+    await adminFetch(`${API}/content/site_logo`, {
+      method: 'PUT',
+      body: JSON.stringify({ value_en: url, value_bn: '' })
+    });
+    applySiteLogo(url);
+    showToast('Logo URL saved successfully!', 'success');
+  } catch(e) {
+    showToast('Failed to save logo URL: ' + e.message, 'error');
   }
 }
 
@@ -1162,6 +1200,14 @@ function debounce(fn, delay) {
 document.addEventListener('DOMContentLoaded', () => {
   if (!requireAuth()) return;
   loadDashboard();
+
+  // Load and display custom logo across admin panel
+  adminFetch(`${API}/content`).then(content => {
+    if (content.site_logo && content.site_logo.en) {
+      applySiteLogo(content.site_logo.en);
+    }
+  }).catch(() => {});
+
   // Set avatar initials
   const username = sessionStorage.getItem('adminUser') || 'A';
   document.getElementById('adminUsername').textContent = username.charAt(0).toUpperCase();
