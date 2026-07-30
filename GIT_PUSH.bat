@@ -27,8 +27,8 @@ if not exist ".git" (
 )
 
 :: Set local git identity if not set globally
-git config user.name "sayak"
-git config user.email "sayak@github.local"
+git config user.name "sayakcode"
+git config user.email "sayakcode@users.noreply.github.com"
 
 :: Set the remote repository URL
 echo [INFO] Connecting to GitHub repository...
